@@ -1,26 +1,36 @@
 import React, { useState } from "react";
+import SignUp from "./SignUp";
 import {
   Activity, ArrowRight, Eye, EyeOff, HeartPulse, LockKeyhole,
   Mail, ShieldCheck, Stethoscope, UserRound, CalendarDays,
-  ClipboardList, LogOut, CheckCircle2, Menu
+  ClipboardList, LogOut, CheckCircle2, Building2, Pill
 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
+const providerTypes = [
+  { value: "doctor", label: "Doctor", description: "Individual medical professionals", Icon: Stethoscope },
+  { value: "diagnostic_centre", label: "Diagnostic Centre", description: "Labs and diagnostic facilities", Icon: Building2 },
+  { value: "pharmacy", label: "Pharmacy", description: "Pharmacies and medicine providers", Icon: Pill }
+];
+
 function Brand() {
   return (
-    <div className="flex items-center">
-      <img
-        src="/focus-logo.png"
-        alt="Focus Scans and Diagnostics"
-        className="h-auto w-[190px] max-w-full object-contain sm:w-[230px]"
-      />
+    <div className="flex items-center gap-3">
+      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-care-700 text-white">
+        <HeartPulse size={25} />
+      </div>
+      <div>
+        <div className="text-2xl font-extrabold tracking-tight text-care-900">Medigrids</div>
+        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Connected healthcare</div>
+      </div>
     </div>
   );
 }
 
-function LoginPage({ onLogin }) {
-  const [role, setRole] = useState("customer");
+export function LoginPage({ onLogin, onSignUp }) {
+  const [accountType, setAccountType] = useState("general_public");
+  const [providerType, setProviderType] = useState("doctor");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -33,35 +43,34 @@ function LoginPage({ onLogin }) {
     event.preventDefault();
     setError("");
     setNotice("");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Enter a valid email address to continue.");
+    const trimmedEmail = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(trimmedEmail)) {
+      setError("Please enter a valid email address.");
       return;
     }
     if (password.length < 6) {
-      setError("Your password must contain at least 6 characters.");
+      setError("Password must contain at least 6 characters.");
       return;
     }
+
     setLoading(true);
     try {
       const response = await fetch(`${API_URL}/api/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, role, remember })
+        body: JSON.stringify({ email: trimmedEmail, password, accountType, providerType: accountType === "medical_service_provider" ? providerType : null, remember })
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Unable to sign in. Please try again.");
       onLogin(data.user);
     } catch (err) {
-      setError(err.message || "Could not reach the server. Make sure the Node.js server is running.");
+      setError(err.message || "Could not reach the server. Please check that the API is running.");
     } finally {
       setLoading(false);
     }
   }
 
-  function handleForgot() {
-    setNotice("Password reset is a demo-only feature and has not been connected yet.");
-    setError("");
-  }
+  const selectedProvider = providerTypes.find((item) => item.value === providerType);
 
   return (
     <main className="min-h-screen bg-[#f5faf8] px-4 py-5 sm:px-6 lg:px-10 lg:py-8">
@@ -75,72 +84,66 @@ function LoginPage({ onLogin }) {
 
         <section className="my-auto grid flex-1 items-center gap-10 py-8 lg:grid-cols-[1.02fr_0.98fr] lg:gap-16 lg:py-12">
           <div className="relative hidden min-h-[620px] overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#10463d] via-[#126b59] to-[#19a78a] p-10 text-white shadow-soft lg:flex lg:flex-col lg:justify-between xl:p-14">
-            <div className="absolute -right-24 -top-20 h-80 w-80 rounded-full border-[1px] border-white/10" />
-            <div className="absolute -right-8 -top-4 h-48 w-48 rounded-full border-[1px] border-white/10" />
+            <div className="absolute -right-24 -top-20 h-80 w-80 rounded-full border border-white/10" />
             <div className="absolute -bottom-28 -left-20 h-80 w-80 rounded-full bg-white/[0.06]" />
             <div className="relative z-10">
               <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white/90">
-                <Activity size={15} /> Scans and diagnostics, made simpler
+                <Activity size={15} /> One connected healthcare network
               </div>
               <h1 className="max-w-lg text-5xl font-bold leading-[1.12] tracking-tight xl:text-[3.5rem]">
                 Better care starts with <span className="text-[#9ef0d6]">being connected.</span>
               </h1>
               <p className="mt-6 max-w-md text-base leading-7 text-white/75">
-                One secure place to manage appointments, keep track of care, and stay connected with the people who matter to your health.
+                A shared healthcare platform connecting medical service providers and the general public.
               </p>
             </div>
-
-            <div className="relative z-10 space-y-4">
-              <div className="rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur-sm">
-                <div className="flex items-start gap-4">
-                  <div className="rounded-xl bg-white/15 p-3"><HeartPulse size={22} /></div>
-                  <div>
-                    <div className="font-semibold">Care that feels personal</div>
-                    <div className="mt-1 text-sm leading-6 text-white/70">A simpler healthcare experience for every step of your journey.</div>
-                  </div>
+            <div className="relative z-10 rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur-sm">
+              <div className="flex items-start gap-4">
+                <div className="rounded-xl bg-white/15 p-3"><HeartPulse size={22} /></div>
+                <div>
+                  <div className="font-semibold">One platform, connected services</div>
+                  <div className="mt-1 text-sm leading-6 text-white/70">For doctors, diagnostic centres, pharmacies and individuals.</div>
                 </div>
-              </div>
-              <div className="flex items-center gap-3 text-sm text-white/70">
-                <div className="flex -space-x-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#146b59] bg-[#d3f4e8] text-xs font-bold text-care-800">D</div>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#146b59] bg-[#fbe5c7] text-xs font-bold text-amber-800">C</div>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#146b59] bg-[#dbeafe] text-xs font-bold text-blue-800">+</div>
-                </div>
-                Designed for doctors and customers alike
               </div>
             </div>
           </div>
 
-          <div className="mx-auto w-full max-w-[470px]">
+          <div className="mx-auto w-full max-w-[500px]">
             <div className="mb-8 lg:hidden">
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-care-50 px-3 py-1.5 text-xs font-semibold text-care-700">
-                <Activity size={14} /> Scans and diagnostics, made simpler
-              </div>
-              <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl">
-                Welcome to better care.
-              </h1>
-              <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">One place to stay connected to your healthcare journey.</p>
+              <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl">Welcome to Medigrids.</h1>
+              <p className="mt-2 text-sm leading-6 text-slate-500">One place to connect your healthcare journey.</p>
             </div>
-
             <div className="rounded-[1.75rem] border border-slate-100 bg-white p-6 shadow-[0_20px_65px_rgba(15,68,57,0.08)] sm:p-9">
               <div className="mb-7">
                 <p className="text-sm font-bold text-care-700">WELCOME BACK</p>
-                <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-[2rem]">Sign in to Focus</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-500">Choose your account type to continue securely.</p>
+                <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-[2rem]">Sign in to Medigrids</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-500">Select your account category to continue.</p>
               </div>
 
-              <div className="mb-6 grid grid-cols-2 gap-3 rounded-2xl bg-slate-50 p-1.5">
-                <button type="button" onClick={() => setRole("customer")}
-                  className={`flex min-h-[76px] items-center gap-3 rounded-xl border px-3 py-3 text-left transition-all ${role === "customer" ? "border-care-200 bg-white text-care-800 shadow-sm ring-1 ring-care-100" : "border-transparent text-slate-500 hover:bg-white/80"}`}>
-                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${role === "customer" ? "bg-care-50 text-care-700" : "bg-white text-slate-500"}`}><UserRound size={20} /></span>
-                  <span><span className="block text-sm font-bold">Customer</span><span className="mt-0.5 block text-[11px]">My healthcare</span></span>
+              <div className="mb-5 grid grid-cols-2 gap-3">
+                <button type="button" onClick={() => { setAccountType("general_public"); setError(""); }}
+                  className={`rounded-xl border p-3 text-left transition ${accountType === "general_public" ? "border-care-300 bg-care-50 text-care-900 ring-1 ring-care-100" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}>
+                  <UserRound size={20} className="mb-2" />
+                  <span className="block text-sm font-bold">General Public</span>
+                  <span className="mt-1 block text-xs text-slate-500">Patient / Individual</span>
                 </button>
-                <button type="button" onClick={() => setRole("doctor")}
-                  className={`flex min-h-[76px] items-center gap-3 rounded-xl border px-3 py-3 text-left transition-all ${role === "doctor" ? "border-care-200 bg-white text-care-800 shadow-sm ring-1 ring-care-100" : "border-transparent text-slate-500 hover:bg-white/80"}`}>
-                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${role === "doctor" ? "bg-care-50 text-care-700" : "bg-white text-slate-500"}`}><Stethoscope size={20} /></span>
-                  <span><span className="block text-sm font-bold">Doctor</span><span className="mt-0.5 block text-[11px]">Care dashboard</span></span>
+                <button type="button" onClick={() => { setAccountType("medical_service_provider"); setError(""); }}
+                  className={`rounded-xl border p-3 text-left transition ${accountType === "medical_service_provider" ? "border-care-300 bg-care-50 text-care-900 ring-1 ring-care-100" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}>
+                  <HeartPulse size={20} className="mb-2" />
+                  <span className="block text-sm font-bold">Medical Service Provider</span>
+                  <span className="mt-1 block text-xs text-slate-500">Healthcare organisation</span>
                 </button>
               </div>
+
+              {accountType === "medical_service_provider" && (
+                <div className="mb-6">
+                  <label htmlFor="providerType" className="mb-2 block text-sm font-semibold text-slate-700">Provider type</label>
+                  <select id="providerType" value={providerType} onChange={(e) => setProviderType(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none focus:border-care-600 focus:ring-2 focus:ring-care-100">
+                    {providerTypes.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
+                  </select>
+                  <p className="mt-2 text-xs text-slate-500">{selectedProvider.description}</p>
+                </div>
+              )}
 
               <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                 <div>
@@ -148,51 +151,47 @@ function LoginPage({ onLogin }) {
                   <div className="field-wrap">
                     <Mail size={18} className="shrink-0 text-slate-400" />
                     <input id="email" type="email" autoComplete="email" placeholder="you@example.com" value={email}
-                      onChange={e => setEmail(e.target.value)} className="field-input" required />
+                      onChange={(e) => { setEmail(e.target.value); setError(""); }} className="field-input" required />
                   </div>
                 </div>
                 <div>
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <label htmlFor="password" className="block text-sm font-semibold text-slate-700">Password</label>
-                    <button type="button" onClick={handleForgot} className="text-xs font-bold text-care-700 hover:text-care-900">Forgot password?</button>
+                    <button type="button" onClick={() => { setNotice("Password reset is not connected yet."); setError(""); }} className="text-xs font-bold text-care-700 hover:text-care-900">Forgot password?</button>
                   </div>
                   <div className="field-wrap">
                     <LockKeyhole size={18} className="shrink-0 text-slate-400" />
-                    <input id="password" type={showPassword ? "text" : "password"} autoComplete="current-password"
-                      placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)}
-                      className="field-input" required minLength={6} />
-                    <button type="button" aria-label={showPassword ? "Hide password" : "Show password"}
-                      onClick={() => setShowPassword(v => !v)} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+                    <input id="password" type={showPassword ? "text" : "password"} autoComplete="current-password" placeholder="Enter your password" value={password}
+                      onChange={(e) => { setPassword(e.target.value); setError(""); }} className="field-input" required minLength={6} />
+                    <button type="button" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword((v) => !v)} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
                 </div>
-
                 <label className="flex cursor-pointer items-center gap-2.5 text-sm text-slate-500">
-                  <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} className="h-4 w-4 rounded border-slate-300 accent-care-600" />
+                  <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="h-4 w-4 rounded border-slate-300 accent-care-600" />
                   Keep me signed in
                 </label>
-
                 {error && <div role="alert" className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm leading-5 text-rose-700">{error}</div>}
                 {notice && <div role="status" className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-5 text-amber-800">{notice}</div>}
-
-                <button type="submit" disabled={loading}
-                  className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-care-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-care-600/20 transition hover:bg-care-700 focus:outline-none focus:ring-4 focus:ring-care-100 disabled:cursor-wait disabled:opacity-70">
-                  {loading ? "Signing you in..." : `Sign in as ${role === "doctor" ? "Doctor" : "Customer"}`}
-                  {!loading && <ArrowRight size={17} />}
+                <button type="submit" disabled={loading} className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-care-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-care-600/20 transition hover:bg-care-700 disabled:cursor-wait disabled:opacity-70">
+                  {loading ? "Signing you in..." : "Sign in"} {!loading && <ArrowRight size={17} />}
                 </button>
               </form>
+              <div className="mt-6 text-center text-sm text-slate-500">
+                Don't have an account?{" "}
+                <button type="button" onClick={onSignUp} className="font-bold text-care-700 hover:text-care-900">Create an account</button>
+              </div>
               <div className="mt-6 flex items-center justify-center gap-2 text-xs text-slate-400">
-                <ShieldCheck size={15} className="text-care-600" /> Your health journey deserves thoughtful care.
+                <ShieldCheck size={15} className="text-care-600" /> Your information should be handled securely.
               </div>
             </div>
             <p className="mt-5 text-center text-xs leading-5 text-slate-400">Demo portal · Do not enter real patient or medical information.</p>
           </div>
         </section>
-
         <footer className="flex flex-col items-center justify-between gap-2 border-t border-slate-200/70 py-5 text-xs text-slate-400 sm:flex-row">
-          <span>© {new Date().getFullYear()} Focus Scans and Diagnostics. Demo experience.</span>
-          <span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-care-500" /> Built for care, on every screen</span>
+          <span>© {new Date().getFullYear()} Medigrids. All rights reserved.</span>
+          <span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-care-500" /> Connected healthcare</span>
         </footer>
       </div>
     </main>
@@ -200,18 +199,8 @@ function LoginPage({ onLogin }) {
 }
 
 function Dashboard({ user, onLogout }) {
-  const doctor = user.role === "doctor";
-  const cards = doctor
-    ? [
-        { icon: CalendarDays, title: "Appointments", value: "08", note: "Today's schedule" },
-        { icon: UserRound, title: "My patients", value: "124", note: "Patient directory" },
-        { icon: ClipboardList, title: "Care notes", value: "12", note: "Pending review" }
-      ]
-    : [
-        { icon: CalendarDays, title: "Appointments", value: "02", note: "Upcoming visits" },
-        { icon: ClipboardList, title: "Health records", value: "04", note: "Your saved records" },
-        { icon: HeartPulse, title: "Care overview", value: "Good", note: "Your health space" }
-      ];
+  const provider = user.accountType === "medical_service_provider";
+  const providerLabel = providerTypes.find((item) => item.value === user.providerType)?.label;
   return (
     <main className="min-h-screen bg-[#f5faf8]">
       <header className="border-b border-slate-100 bg-white">
@@ -225,28 +214,29 @@ function Dashboard({ user, onLogout }) {
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
         <div className="mb-9 rounded-3xl bg-gradient-to-r from-care-900 to-care-600 p-7 text-white sm:p-10">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold"><CheckCircle2 size={14} /> Demo sign-in successful</div>
-          <p className="text-sm font-medium text-white/70">{doctor ? "DOCTOR WORKSPACE" : "CUSTOMER WORKSPACE"}</p>
-          <h1 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">{doctor ? "Welcome to your care dashboard." : "Welcome to your health space."}</h1>
-          <p className="mt-3 max-w-2xl break-words text-sm leading-6 text-white/75">Signed in as {user.email}. This is a placeholder page for the {doctor ? "doctor" : "customer"} experience.</p>
-        </div>
-        <div className="mb-6 flex items-end justify-between">
-          <div><h2 className="text-xl font-extrabold text-slate-900">Your overview</h2><p className="mt-1 text-sm text-slate-500">Sample content to help shape the next stage.</p></div>
-          <span className="rounded-full bg-care-50 px-3 py-1.5 text-xs font-bold capitalize text-care-700">{user.role} portal</span>
+          <p className="text-sm font-medium text-white/70">{provider ? "MEDICAL SERVICE PROVIDER" : "GENERAL PUBLIC"}</p>
+          <h1 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">Welcome to Medigrids.</h1>
+          <p className="mt-3 max-w-2xl break-words text-sm leading-6 text-white/75">Signed in as {user.email}. Account: {provider ? providerLabel : "General Public"}.</p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {cards.map(({ icon: Icon, title, value, note }) => (
-            <div key={title} className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-              <div className="flex items-start justify-between"><div className="rounded-xl bg-care-50 p-3 text-care-700"><Icon size={21} /></div><span className="text-xs font-medium text-slate-400">Placeholder</span></div>
+          {(provider ? [
+            { icon: CalendarDays, title: "Appointments", value: "—", note: "Provider schedule" },
+            { icon: UserRound, title: "Service users", value: "—", note: "Connected users" },
+            { icon: ClipboardList, title: "Provider profile", value: "—", note: "Organisation details" }
+          ] : [
+            { icon: CalendarDays, title: "Appointments", value: "—", note: "Your upcoming visits" },
+            { icon: ClipboardList, title: "Health records", value: "—", note: "Your saved records" },
+            { icon: HeartPulse, title: "Care overview", value: "—", note: "Your health space" }
+          ]).map(({ icon: Icon, title, value, note }) => (
+            <div key={title} className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+              <div className="rounded-xl bg-care-50 p-3 text-care-700 inline-flex"><Icon size={21} /></div>
               <p className="mt-6 text-sm font-semibold text-slate-500">{title}</p>
               <p className="mt-1 text-3xl font-extrabold text-slate-900">{value}</p>
               <p className="mt-2 text-sm text-slate-400">{note}</p>
             </div>
           ))}
         </div>
-        <div className="mt-7 rounded-2xl border border-dashed border-care-200 bg-white/70 p-6">
-          <h3 className="font-bold text-slate-800">Next step</h3>
-          <p className="mt-2 text-sm leading-6 text-slate-500">This page is intentionally a dummy dashboard. You can now replace these sample cards with real {doctor ? "appointments, patient workflows, and care tools" : "appointments, health records, and profile features"}.</p>
-        </div>
+        <p className="mt-7 rounded-2xl border border-dashed border-care-200 bg-white/70 p-6 text-sm leading-6 text-slate-500">This is a placeholder dashboard. Real provider and patient workflows still need to be implemented.</p>
       </div>
     </main>
   );
@@ -254,7 +244,8 @@ function Dashboard({ user, onLogout }) {
 
 export default function App() {
   const [user, setUser] = useState(null);
-  return user
-    ? <Dashboard user={user} onLogout={() => setUser(null)} />
-    : <LoginPage onLogin={setUser} />;
+  const [showSignUp, setShowSignUp] = useState(false);
+  if (user) return <Dashboard user={user} onLogout={() => setUser(null)} />;
+  if (showSignUp) return <SignUp onBackToLogin={() => setShowSignUp(false)} />;
+  return <LoginPage onLogin={setUser} onSignUp={() => setShowSignUp(true)} />;
 }

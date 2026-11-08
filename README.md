@@ -1,28 +1,31 @@
-# Focus Scans and Diagnostics Portal
+# Medigrids demo portal
 
-A responsive shared login UI for doctors and customers, built with React, Tailwind CSS, Vite, Node.js, and Express.
+## Account categories
+- Medical Service Provider: Doctor, Diagnostic Centre, Pharmacy
+- General Public: individual / patient
 
-## Requirements
-- Node.js 20+ recommended
-- npm
+## Run locally
+Open two terminals from `care-portal-login`:
 
-## Install
-From this folder, run:
-
-```bash
-npm install
-npm --prefix client install
-npm --prefix server install
+```powershell
+npm.cmd --prefix server install
+npm.cmd --prefix server run dev
 ```
 
-## Run in development
-```bash
-npm run dev
+```powershell
+npm.cmd --prefix client install
+npm.cmd --prefix client run dev
 ```
-Open the Vite URL shown in the terminal (usually http://localhost:5173).
 
-## Demo behavior
-Choose Doctor or Customer, enter an email-shaped value and a password of at least 6 characters, then sign in. The client sends the selected role and credentials to the Express API. The demo API accepts any syntactically valid email and password of 6+ characters; it does not verify real accounts.
+Frontend: http://localhost:5173  
+API health check: http://localhost:4000/api/health
 
-## Important
-This is a UI/demo starter, not production authentication. Before real use, add a database, account verification, secure password hashing, session or token management, rate limiting, CSRF protections where applicable, password reset flow, and HTTPS. Do not use real patient information in this demo.
+## Run frontend tests
+
+```powershell
+npm.cmd --prefix client install
+npm.cmd --prefix client run test:run
+```
+
+## Important demo limitation
+The current API stores accounts only in server memory and clears them when the server restarts. It is a demonstration of the registration/login flow, not production authentication. It does not use a database, password hashing, email/phone verification, secure sessions/JWT, provider credential verification, audit logging, or production security controls. The demo API currently holds passwords in memory for comparison. Do not use real credentials, patient information, or medical data. Before deployment, replace this demo API with a database-backed implementation using a suitable password-hashing library, verified account workflows, secure session management, authorization, HTTPS, rate limiting and privacy/security review.
